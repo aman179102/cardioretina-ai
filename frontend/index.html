@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioRetina-AI | Heart Disease Risk Prediction</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="disclaimer-banner">
+        <strong>Research Prototype:</strong> This system is for educational and experimental use only.
+        Not intended for clinical diagnosis or treatment decisions. Always consult a healthcare professional.
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="20" cy="20" r="8" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="20" cy="20" r="3" fill="currentColor"/>
+                        <line x1="20" y1="2" x2="20" y2="10" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="20" y1="30" x2="20" y2="38" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="2" y1="20" x2="10" y2="20" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="30" y1="20" x2="38" y2="20" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>CardioRetina-AI</h1>
+                    <p class="subtitle">Non-invasive Heart Disease Risk Prediction from Retinal Imaging</p>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="/docs" target="_blank">API Docs</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#about">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="grid-layout">
+            <!-- Left Column: Input -->
+            <section class="input-section">
+                <div class="card">
+                    <h2 class="card-title">
+                        <span class="icon">&#128247;</span> Upload Retinal Image
+                    </h2>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content" id="uploadContent">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M24 32V16M24 16L18 22M24 16L30 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M8 32C8 36.4183 11.5817 40 16 40H32C36.4183 40 40 36.4183 40 32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <p class="upload-text">Drag & drop retinal fundus image</p>
+                            <p class="upload-subtext">or click to browse (JPEG, PNG - max 10MB)</p>
+                        </div>
+                        <img id="imagePreview" class="image-preview hidden" alt="Preview">
+                        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/bmp,image/tiff" hidden>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">
+                        <span class="icon">&#9764;</span> Clinical Data
+                    </h2>
+                    <form id="clinicalForm" class="clinical-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="age">Age (years)</label>
+                                <input type="number" id="age" name="age" value="50" min="0" max="120" step="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="systolic_bp">Systolic BP (mmHg)</label>
+                                <input type="number" id="systolic_bp" name="systolic_bp" value="120" min="50" max="300">
+                            </div>
+                            <div class="form-group">
+                                <label for="diastolic_bp">Diastolic BP (mmHg)</label>
+                                <input type="number" id="diastolic_bp" name="diastolic_bp" value="80" min="30" max="200">
+                            </div>
+                            <div class="form-group">
+                                <label for="cholesterol">Cholesterol (mg/dL)</label>
+                                <input type="number" id="cholesterol" name="cholesterol" value="200" min="50" max="600">
+                            </div>
+                            <div class="form-group">
+                                <label for="bmi">BMI (kg/m&sup2;)</label>
+                                <input type="number" id="bmi" name="bmi" value="25" min="10" max="70" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="smoking">Smoking</label>
+                                <select id="smoking" name="smoking">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="diabetes">Diabetes</label>
+                                <select id="diabetes" name="diabetes">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="physical_activity">Physical Activity</label>
+                                <select id="physical_activity" name="physical_activity">
+                                    <option value="1" selected>Active</option>
+                                    <option value="0">Sedentary</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="gradcamCheck"> Generate Grad-CAM heatmap
+                            </label>
+                        </div>
+                        <button type="submit" id="predictBtn" class="btn-primary" disabled>
+                            <span class="btn-text">Analyze Retinal Image</span>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span> Analyzing...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Right Column: Results -->
+            <section class="results-section">
+                <div id="resultsPlaceholder" class="card placeholder-card">
+                    <div class="placeholder-content">
+                        <div class="placeholder-icon">
+                            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="8" y="8" width="48" height="48" rx="8" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="32" cy="28" r="8" stroke="currentColor" stroke-width="2"/>
+                                <path d="M18 48C18 40.268 24.268 34 32 34C39.732 34 46 40.268 46 48" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <h3>Results will appear here</h3>
+                        <p>Upload a retinal fundus image and fill in clinical data to get a heart disease risk prediction.</p>
+                    </div>
+                </div>
+
+                <div id="resultsContainer" class="hidden">
+                    <!-- Risk Card -->
+                    <div class="card result-card">
+                        <h2 class="card-title">
+                            <span class="icon">&#128202;</span> Risk Assessment
+                        </h2>
+                        <div class="risk-display">
+                            <div class="risk-gauge-container">
+                                <div class="risk-gauge" id="riskGauge">
+                                    <div class="gauge-fill" id="gaugeFill"></div>
+                                </div>
+                                <div class="risk-label" id="riskLabel">--</div>
+                            </div>
+                            <div class="risk-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Risk Probability</span>
+                                    <span class="stat-value" id="riskProbability">--</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Confidence</span>
+                                    <span class="stat-value" id="confidence">--</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Model Version</span>
+                                    <span class="stat-value" id="modelVersion">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Factors Card -->
+                    <div class="card">
+                        <h2 class="card-title">
+                            <span class="icon">&#127973;</span> Clinical Factor Assessment
+                        </h2>
+                        <div id="clinicalFactors" class="factors-grid"></div>
+                        <div id="topContributors" class="contributors-section hidden">
+                            <h3>Key Risk Contributors</h3>
+                            <ul id="contributorsList"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Grad-CAM Card -->
+                    <div id="gradcamCard" class="card hidden">
+                        <h2 class="card-title">
+                            <span class="icon">&#128065;</span> Grad-CAM Visualization
+                        </h2>
+                        <p class="card-description">Highlighted retinal regions contributing to the prediction</p>
+                        <img id="gradcamImage" class="gradcam-image" alt="Grad-CAM heatmap">
+                    </div>
+                </div>
+
+                <div id="errorContainer" class="card error-card hidden">
+                    <h2 class="card-title">Error</h2>
+                    <p id="errorMessage"></p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="card architecture-card">
+            <h2 class="card-title">
+                <span class="icon">&#129516;</span> Model Architecture
+            </h2>
+            <div class="architecture-diagram">
+                <div class="arch-flow">
+                    <div class="arch-input">
+                        <div class="arch-box input-box">Retinal Fundus Image<br><small>224x224 RGB</small></div>
+                    </div>
+                    <div class="arch-branches">
+                        <div class="arch-branch">
+                            <div class="arch-arrow">&#8595;</div>
+                            <div class="arch-box cnn-box">EfficientNet-B3<br><small>Local Features</small></div>
+                        </div>
+                        <div class="arch-branch">
+                            <div class="arch-arrow">&#8595;</div>
+                            <div class="arch-box vit-box">Vision Transformer<br><small>Global Context</small></div>
+                        </div>
+                        <div class="arch-branch">
+                            <div class="arch-box clinical-box">Clinical Data<br><small>8 Features</small></div>
+                            <div class="arch-arrow">&#8595;</div>
+                            <div class="arch-box dense-box">Dense Network<br><small>64 &rarr; 32</small></div>
+                        </div>
+                    </div>
+                    <div class="arch-fusion">
+                        <div class="arch-arrow">&#8595;</div>
+                        <div class="arch-box fusion-box">Feature Fusion Layer<br><small>Concatenation &rarr; 128 &rarr; 64 &rarr; 32</small></div>
+                        <div class="arch-arrow">&#8595;</div>
+                        <div class="arch-box output-box">Sigmoid Output<br><small>Risk Probability [0, 1]</small></div>
+                    </div>
+                    <div class="arch-explain">
+                        <div class="arch-box explain-box">Grad-CAM / SHAP<br><small>Explainability</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="card">
+            <h2 class="card-title">About CardioRetina-AI</h2>
+            <p>CardioRetina-AI is a research prototype that uses deep learning to analyze retinal fundus images
+            for non-invasive cardiovascular risk assessment. The retinal vasculature shares embryological and
+            physiological properties with the coronary vasculature, making it a potential window into
+            cardiovascular health.</p>
+            <p><strong>Key Features:</strong> Hybrid CNN + Vision Transformer architecture,
+            multimodal clinical data fusion, Grad-CAM explainability, SHAP analysis,
+            comprehensive evaluation metrics, and ablation study support.</p>
+            <div class="disclaimer-inline">
+                <strong>Important Disclaimer:</strong> This project is a research prototype for educational
+                and experimental use only. It is not intended for clinical diagnosis, treatment decisions,
+                or as a substitute for professional medical advice. Always consult a qualified healthcare professional.
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>CardioRetina-AI &mdash; Research Prototype | Not for Clinical Use</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
